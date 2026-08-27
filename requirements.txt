@@ -1,0 +1,13 @@
+transformers==4.51.1
+fschat @ git+https://github.com/lm-sys/FastChat@5c0443edb8545babb37d495ade86c75ebbf68009
+torch==2.6.0
+vllm==0.8.5
+accelerate
+datasets==2.21.0
+numpy
+pandas==2.2.2
+matplotlib==3.10.3
+tqdm
+SentencePiece==0.2.0
+protobuf<5
+optree==0.13.0

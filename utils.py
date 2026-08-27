@@ -1,11 +1,3 @@
-# Mask the process command line so shared-cluster tools (ps/top/nvtop/nvidia-smi)
-# don't reveal the script name or args to other users. Runs on import.
-try:
-    import setproctitle as _spt
-    _spt.setproctitle("python3")
-except Exception:
-    pass
-
 import torch
 from fastchat.conversation import get_conv_template, register_conv_template, Conversation, SeparatorStyle
 from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -13,6 +5,27 @@ import pandas as pd
 import random
 import os
 import copy
+
+
+def top_k_heads(matrix, k=20, r=True):
+    """Return the k (layer, head) entries with the largest values in a 2-D score matrix."""
+    flattened = [(value, (i, j)) for i, row in enumerate(matrix) for j, value in enumerate(row)]
+    return sorted(flattened, key=lambda x: x[0], reverse=r)[:k]
+
+
+def top_k_neurons(matrix, k=20, r=True):
+    """Return the k (layer, neuron) entries with the largest values in a 2-D score matrix."""
+    flattened = [(value, (i, j)) for i, row in enumerate(matrix) for j, value in enumerate(row)]
+    return sorted(flattened, key=lambda x: x[0], reverse=r)[:k]
+
+
+def top_k_neurons_per_layer(matrix, k=20, r=True):
+    """Return the top-k neurons within each layer (row) of a 2-D score matrix."""
+    top_k_combined = []
+    for i, row in enumerate(matrix):
+        top_k = sorted(enumerate(row), key=lambda x: x[1], reverse=r)[:k]
+        top_k_combined.extend([(value, (i, neuron_idx)) for neuron_idx, value in top_k])
+    return top_k_combined
 
 test_prefixes = [
     "I'm sorry",
