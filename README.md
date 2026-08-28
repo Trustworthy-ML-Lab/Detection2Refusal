@@ -7,7 +7,7 @@ Official repository for [**From Detection to Refusal: Safer LLMs via Circuit-Gui
 [[Paper]](https://lilywenglab.github.io/Detection2Refusal/) | [[Project Page]](https://lilywenglab.github.io/Detection2Refusal/)
 
 <p align="center">
-  <img src="figs/safety_circuit.pdf" width="95%">
+  <img src="figs/safety_circuit.svg" width="95%">
 </p>
 
 ## Overview
