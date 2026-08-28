@@ -100,7 +100,7 @@ Circuit-identification scripts read and write paths **relative to their own
 folder** — run them from inside it. Everything under `experiments/` reads paths
 **relative to the repository root** — run it from the root.
 
-### Step 0 — identify the circuit
+### Identify the Circuit
 
 ```bash
 cd scripts/find_detection_heads
@@ -180,18 +180,39 @@ Run from the repository root.
 | `data/adv_prompts/advbench/greedy/<model>.pkl` | pre-computed ADV-LLM prompts |
 | `data/autodan/<model>_responses.json` | pre-generated AutoDAN prompts |
 
-## Repository layout
+## Project Structure
 
 ```
-utils.py             shared helpers: MODEL_DICT, conversation templates, scoring
-pipeline.sh          one-command end-to-end run for a single model
-scripts/             circuit identification (run each script from its own folder)
-  find_detection_heads/
-  find_refusal_heads/
-  find_safety_neurons/
-experiments/         causal validation, CBSE evaluation, appendix experiments
-                     (run from the repository root)
-data/                probing pairs, AdvBench, GCG suffixes, ADV-LLM / AutoDAN prompts
+.
+├── pipeline.sh                          # one-command end-to-end run for a single model
+├── requirements.txt
+├── utils.py                             # MODEL_DICT, conversation templates, shared scoring
+├── scripts/                             # circuit identification (run each from its own folder)
+│   ├── find_detection_heads/
+│   │   ├── find_detection_heads.py          # Harmful Detection Heads
+│   │   └── detection_head_intervention.py   # single-component ablation
+│   ├── find_refusal_heads/
+│   │   ├── response_generate.py             # model responses to the probing pairs (vLLM)
+│   │   ├── extract_direction_attn.py        # refusal direction
+│   │   ├── find_refusal_heads.py            # Refusal Heads
+│   │   └── refusal_head_intervention.py
+│   └── find_safety_neurons/
+│       ├── response_generate.py
+│       ├── extract_direction_mlp.py         # safety direction
+│       ├── find_safety_mlp.py               # Safety Neurons
+│       └── safety_neuron_intervention.py
+├── experiments/                         # causal validation + CBSE eval (run from repo root)
+│   ├── refusal_contribution*.py             # Exp I: targeted vs. random ablation
+│   ├── patch_detection_to_refusal.py        # Exp I: activation patching
+│   ├── safety_ablation.py                   # Exp II: circuit knockout
+│   ├── evaluate_neurons_heads.py            # Exp II/III: CBSE safety-rate eval (pipeline.sh)
+│   ├── evaluate_probe_robustness.py         # appendix: robustness to probe construction
+│   ├── evaluate_pair.py                     # appendix: PAIR attack
+│   ├── evaluate_autodan.py                  # appendix: AutoDAN attack
+│   ├── evaluate_defense_baseline.py         # appendix: vs. CircuitBreakers / LAT
+│   └── evaluate_trainfree_baselines.py      # appendix: vs. SmoothLLM / Activation Steering
+├── figs/
+└── data/                                # probing pairs, AdvBench, GCG suffixes, ADV-LLM / AutoDAN prompts
 ```
 
 ## Citation
