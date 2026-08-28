@@ -1,52 +1,36 @@
 # From Detection to Refusal: Safer LLMs via Circuit-Guided Weight Scaling
 
-**EMNLP 2026 Findings**
+2026/08/20 Update: Our paper has been accepted to EMNLP 2026 Findings!
 
-[[Paper]](https://lilywenglab.github.io/Detection2Refusal/) &nbsp;|&nbsp; [[Project Page]](https://lilywenglab.github.io/Detection2Refusal/)
+Official repository for [**From Detection to Refusal: Safer LLMs via Circuit-Guided Weight Scaling**](https://lilywenglab.github.io/Detection2Refusal/).
+
+[[Paper]](https://lilywenglab.github.io/Detection2Refusal/) | [[Project Page]](https://lilywenglab.github.io/Detection2Refusal/)
 
 <p align="center">
   <img src="figs/safety_circuit.png" width="95%">
 </p>
-<p align="center"><em>
-  The three-stage safety circuit and the CBSE weight-scaling intervention.
-</em></p>
 
-We study LLM refusal from a mechanistic-interpretability angle and identify a
-three-stage **safety circuit**:
+## Overview
 
-1. **Harmful Detection Heads** — attention heads that recognize an unsafe request;
-2. **Safety Neurons** — MLP neurons that stabilize the resulting safety signal in
-   the residual stream;
-3. **Refusal Heads** — attention heads that turn that signal into a refusal.
+Refusal in aligned LLMs is organized by a compact three-stage **safety circuit**:
+**Harmful Detection Heads** recognize an unsafe request → **Safety Neurons**
+stabilize the resulting safety signal in the residual stream → **Refusal Heads**
+turn it into a refusal. Building on this, **CBSE (Circuit-Based Safety Editing)**
+scales the weights of those components to reinforce the circuit in place.
 
-We give causal evidence for this detection → refusal pathway (targeted ablation
-and activation patching), and it recurs across six chat models. Building on it,
-**CBSE (Circuit-Based Safety Editing)** scales the weights of these components to
-reinforce the circuit directly — no fine-tuning, no added inference-time cost.
+Key findings:
+- The circuit recurs across six chat models (llama2/3, mistral, guanaco, qwen2.5/3).
+- Ablating detection heads or safety neurons collapses the refusal heads'
+  contribution far more than removing random components; activation patching shows
+  detection heads *directly* drive refusal heads, not a shared upstream cause.
+- CBSE is training-free, architecture-preserving, and adds no inference-time cost.
+- Across the six models CBSE gives a **26.5% average safety-rate gain** under
+  adversarial attack (GCG, ADV-LLM, PAIR, AutoDAN) for a **1.7% average accuracy
+  drop** on MMLU / HellaSwag / PIQA / WinoGrande.
 
-The six models: `llama2`, `llama3`, `mistral`, `guanaco`, `qwen2.5`, `qwen3`
-(exact HuggingFace IDs in `MODEL_DICT`, `utils.py`).
+## Quick start
 
-## Results
-
-Across six chat models, CBSE gives a **26.5% average safety gain** under
-adversarial attack for a **1.7% average accuracy drop** on four standard
-benchmarks (MMLU, HellaSwag, PIQA, WinoGrande) — training-free and
-architecture-preserving.
-
-Safety rate (higher is better), base model → after CBSE:
-
-| Model    | GCG        | ADV-LLM    |
-|----------|------------|------------|
-| Llama-3-8B | 72% → 97% | 14% → 27% |
-| Mistral-7B | 40% → 87% |  9% → 68% |
-| Qwen2.5-7B | 27% → 89% |  3% → 43% |
-
-The full grid (all six models, plus PAIR / AutoDAN, perplexity, and the
-per-component ablations) is in the paper. `./pipeline.sh` reproduces one
-(model, attack) cell and appends it to `results/cbse_safety_rates.csv`.
-
-## Setup
+### Setup
 
 ```bash
 pip install -r requirements.txt
@@ -56,7 +40,7 @@ huggingface-cli login   # gated models + meta-llama/Llama-Guard-3-8B
 One GPU with ≥24 GB is enough for the main pipeline. The attack/generation
 experiments use vLLM and take a `--tp` tensor-parallel flag.
 
-## Quick start
+### Run
 
 ```bash
 ./pipeline.sh                              # llama3, GCG attack
@@ -79,19 +63,36 @@ Safety rates are appended to `results/cbse_safety_rates.csv`. Attacks: `none`
 The circuit components are written under `scripts/find_*/` on the first run;
 `--skip-circuit` reuses them.
 
-## Repository layout
+## Supported models
 
-```
-utils.py             shared helpers: MODEL_DICT, conversation templates, scoring
-pipeline.sh          one-command end-to-end run for a single model
-scripts/             circuit identification (run each script from its own folder)
-  find_detection_heads/
-  find_refusal_heads/
-  find_safety_neurons/
-experiments/         causal validation, CBSE evaluation, appendix experiments
-                     (run from the repository root)
-data/                probing pairs, AdvBench, GCG suffixes, ADV-LLM / AutoDAN prompts
-```
+Pass any alias below as `--model`; exact IDs live in `MODEL_DICT` (`utils.py`).
+
+| Alias | HuggingFace path |
+|-------|------------------|
+| `llama2`  | meta-llama/Llama-2-7b-chat-hf |
+| `llama3`  | meta-llama/Meta-Llama-3-8B-Instruct |
+| `mistral` | mistralai/Mistral-7B-Instruct-v0.2 |
+| `guanaco` | TheBloke/guanaco-7B-HF |
+| `qwen2.5` | Qwen/Qwen2.5-7B-Instruct |
+| `qwen3`   | Qwen/Qwen3-4B-Instruct-2507 |
+
+## Results
+
+Safety rate under the GCG attack (100 AdvBench prompts, Llama-Guard-3 judge),
+base model → after CBSE:
+
+| Model | GCG (base → CBSE) |
+|-------|-------------------|
+| llama2  | 55% → 95% |
+| llama3  | 72% → 97% |
+| mistral | 40% → 87% |
+| guanaco |  6% → 45% |
+| qwen2.5 | 27% → 89% |
+| qwen3   | 53% → 100% |
+
+The full grid (ADV-LLM / PAIR / AutoDAN, utility benchmarks, perplexity, and the
+per-component ablations) is in the paper. `./pipeline.sh` reproduces one
+(model, attack) cell and appends it to `results/cbse_safety_rates.csv`.
 
 ## Running steps individually
 
@@ -178,6 +179,20 @@ Run from the repository root.
 | `data/gcg_results/<model>/<config>/` | pre-computed GCG suffixes per model and CBSE config |
 | `data/adv_prompts/advbench/greedy/<model>.pkl` | pre-computed ADV-LLM prompts |
 | `data/autodan/<model>_responses.json` | pre-generated AutoDAN prompts |
+
+## Repository layout
+
+```
+utils.py             shared helpers: MODEL_DICT, conversation templates, scoring
+pipeline.sh          one-command end-to-end run for a single model
+scripts/             circuit identification (run each script from its own folder)
+  find_detection_heads/
+  find_refusal_heads/
+  find_safety_neurons/
+experiments/         causal validation, CBSE evaluation, appendix experiments
+                     (run from the repository root)
+data/                probing pairs, AdvBench, GCG suffixes, ADV-LLM / AutoDAN prompts
+```
 
 ## Citation
 
