@@ -1,10 +1,15 @@
 # From Detection to Refusal: Safer LLMs via Circuit-Guided Weight Scaling
 
-Code for the paper *From Detection to Refusal: Safer LLMs via Circuit-Guided
-Weight Scaling* (under review). Links to the paper and project page will be added
-here once available.
+**EMNLP 2026 Findings**
 
-## What this is
+[[Paper]](https://lilywenglab.github.io/Detection2Refusal/) &nbsp;|&nbsp; [[Project Page]](https://lilywenglab.github.io/Detection2Refusal/)
+
+<p align="center">
+  <img src="figs/safety_circuit.png" width="95%">
+</p>
+<p align="center"><em>
+  The three-stage safety circuit and the CBSE weight-scaling intervention.
+</em></p>
 
 We study LLM refusal from a mechanistic-interpretability angle and identify a
 three-stage **safety circuit**:
@@ -14,26 +19,32 @@ three-stage **safety circuit**:
    the residual stream;
 3. **Refusal Heads** — attention heads that turn that signal into a refusal.
 
-Building on this, **CBSE (Circuit-Based Safety Editing)** scales the weights of
-these components to reinforce the circuit directly. It needs no fine-tuning and
-adds no inference-time cost.
+We give causal evidence for this detection → refusal pathway (targeted ablation
+and activation patching), and it recurs across six chat models. Building on it,
+**CBSE (Circuit-Based Safety Editing)** scales the weights of these components to
+reinforce the circuit directly — no fine-tuning, no added inference-time cost.
 
-The method is evaluated on six chat models: `llama2`, `llama3`, `mistral`,
-`guanaco`, `qwen2.5`, `qwen3` (exact HuggingFace IDs in `MODEL_DICT`, `utils.py`).
+The six models: `llama2`, `llama3`, `mistral`, `guanaco`, `qwen2.5`, `qwen3`
+(exact HuggingFace IDs in `MODEL_DICT`, `utils.py`).
 
-## Repository layout
+## Results
 
-```
-utils.py             shared helpers: MODEL_DICT, conversation templates, scoring
-pipeline.sh          one-command end-to-end run for a single model
-scripts/             circuit identification (run each script from its own folder)
-  find_detection_heads/
-  find_refusal_heads/
-  find_safety_neurons/
-experiments/          causal validation, CBSE evaluation, appendix experiments
-                      (run from the repository root)
-data/                probing pairs, AdvBench, GCG suffixes, ADV-LLM / AutoDAN prompts
-```
+Across six chat models, CBSE gives a **26.5% average safety gain** under
+adversarial attack for a **1.7% average accuracy drop** on four standard
+benchmarks (MMLU, HellaSwag, PIQA, WinoGrande) — training-free and
+architecture-preserving.
+
+Safety rate (higher is better), base model → after CBSE:
+
+| Model    | GCG        | ADV-LLM    |
+|----------|------------|------------|
+| Llama-3-8B | 72% → 97% | 14% → 27% |
+| Mistral-7B | 40% → 87% |  9% → 68% |
+| Qwen2.5-7B | 27% → 89% |  3% → 43% |
+
+The full grid (all six models, plus PAIR / AutoDAN, perplexity, and the
+per-component ablations) is in the paper. `./pipeline.sh` reproduces one
+(model, attack) cell and appends it to `results/cbse_safety_rates.csv`.
 
 ## Setup
 
@@ -67,6 +78,20 @@ Safety rates are appended to `results/cbse_safety_rates.csv`. Attacks: `none`
 
 The circuit components are written under `scripts/find_*/` on the first run;
 `--skip-circuit` reuses them.
+
+## Repository layout
+
+```
+utils.py             shared helpers: MODEL_DICT, conversation templates, scoring
+pipeline.sh          one-command end-to-end run for a single model
+scripts/             circuit identification (run each script from its own folder)
+  find_detection_heads/
+  find_refusal_heads/
+  find_safety_neurons/
+experiments/         causal validation, CBSE evaluation, appendix experiments
+                     (run from the repository root)
+data/                probing pairs, AdvBench, GCG suffixes, ADV-LLM / AutoDAN prompts
+```
 
 ## Running steps individually
 
@@ -157,10 +182,10 @@ Run from the repository root.
 ## Citation
 
 ```bibtex
-@misc{cbse,
-  title  = {From Detection to Refusal: Safer LLMs via Circuit-Guided Weight Scaling},
-  author = {Chu, Kuan-Lin and Sun, Chung-En and Weng, Tsui-Wei},
-  year   = {2026},
-  note   = {Preprint}
+@inproceedings{chu2026detection,
+  title     = {From Detection to Refusal: Safer LLMs via Circuit-Guided Weight Scaling},
+  author    = {Chu, Kuan-Lin and Sun, Chung-En and Weng, Tsui-Wei},
+  booktitle = {Findings of the Association for Computational Linguistics: EMNLP 2026},
+  year      = {2026}
 }
 ```
