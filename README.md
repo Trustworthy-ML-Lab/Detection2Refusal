@@ -4,7 +4,7 @@
 
 Official repository for [**From Detection to Refusal: Safer LLMs via Circuit-Guided Weight Scaling**](https://lilywenglab.github.io/Detection2Refusal/).
 
-[[Paper]](https://arxiv.org/pdf/2609.00051) | [[Project Page]](https://lilywenglab.github.io/Detection2Refusal/)
+[[Paper]](https://arxiv.org/abs/2609.00051) | [[Project Page]](https://lilywenglab.github.io/Detection2Refusal/)
 
 <p align="center">
   <img src="figs/safety_circuit.svg" width="95%">
